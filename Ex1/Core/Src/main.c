@@ -63,26 +63,93 @@ int hour = 15, minute = 8, second = 50;
 const int MAX_LED_MATRIX = 8;
 int index_led_matrix = 0;
 uint8_t matrix_buffer[8] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
-void updateLEDMatrix(int index){
-	switch(index){
-	case 0:
-		break;
-	case 1:
-		break;
-	case 2:
-		break;
-	case 3:
-		break;
-	case 4:
-		break;
-	case 5:
-		break;
-	case 6:
-		break;
-	case 7:
-		break;
-	default:
-		break;
+/* Function get buffer to GPIO */
+void getBuffer(uint8_t config)
+{
+	HAL_GPIO_WritePin(GPIOB, ROW0_Pin, !(config&1));
+	config = config >> 1;
+	HAL_GPIO_WritePin(GPIOB, ROW1_Pin, !(config&1));
+	config = config >> 1;
+	HAL_GPIO_WritePin(GPIOB, ROW2_Pin, !(config&1));
+	config = config >> 1;
+	HAL_GPIO_WritePin(GPIOB, ROW3_Pin, !(config&1));
+	config = config >> 1;
+	HAL_GPIO_WritePin(GPIOB, ROW4_Pin, !(config&1));
+	config = config >> 1;
+	HAL_GPIO_WritePin(GPIOB, ROW5_Pin, !(config&1));
+	config = config >> 1;
+	HAL_GPIO_WritePin(GPIOB, ROW6_Pin, !(config&1));
+	config = config >> 1;
+	HAL_GPIO_WritePin(GPIOB, ROW7_Pin, !(config&1));
+}
+
+void updateLEDMatrix(int index)
+{
+  switch(index)
+  {
+  case 0:
+	getBuffer(matrix_buffer[0]);
+	break;
+  case 1:
+  getBuffer(matrix_buffer[1]);
+	break;
+  case 2:
+	  getBuffer(matrix_buffer[2]);
+	break;
+  case 3:
+	  getBuffer(matrix_buffer[3]);
+	break;
+  case 4:
+	  getBuffer(matrix_buffer[4]);
+	break;
+  case 5:
+	  getBuffer(matrix_buffer[5]);
+	break;
+  case 6:
+	  getBuffer(matrix_buffer[6]);
+	break;
+  case 7:
+	  getBuffer(matrix_buffer[7]);
+	break;
+  default:
+	break;
+  }
+}
+void clearENM()
+{
+  HAL_GPIO_WritePin(GPIOA, ENM0_Pin | ENM1_Pin | ENM2_Pin |
+						   ENM3_Pin | ENM4_Pin | ENM5_Pin |
+						   ENM6_Pin | ENM7_Pin, SET);
+}
+/* Fuction for open ENM GPIO */
+void openENM(int index){
+	switch(index) {
+		case 0:
+		  HAL_GPIO_WritePin(GPIOA, ENM0_Pin, RESET);
+		  break;
+		case 1:
+		  HAL_GPIO_WritePin(GPIOA, ENM1_Pin, RESET);
+		  break;
+		case 2:
+		  HAL_GPIO_WritePin(GPIOA, ENM2_Pin, RESET);
+		  break;
+		case 3:
+		  HAL_GPIO_WritePin(GPIOA, ENM3_Pin, RESET);
+		  break;
+		case 4:
+		  HAL_GPIO_WritePin(GPIOA, ENM4_Pin, RESET);
+		  break;
+		case 5:
+		  HAL_GPIO_WritePin(GPIOA, ENM5_Pin, RESET);
+		  break;
+		case 6:
+		  HAL_GPIO_WritePin(GPIOA, ENM6_Pin, RESET);
+		  break;
+		case 7:
+		  HAL_GPIO_WritePin(GPIOA, ENM7_Pin, RESET);
+		  break;
+		default:
+		  break;
 	}
 }
 
@@ -209,6 +276,7 @@ int main(void)
 setTimer1(1000);
 setTimer2(1000);
 setTimer3(250);
+setTimer4(10);
   while (1)
   {
 	  if(timer1_flag == 1){
@@ -233,11 +301,23 @@ setTimer3(250);
 	  }
 	  if(timer3_flag == 1){
 		  update7SEG(index_led++);
-		  if(index_led > 3){
+		  if(index_led > MAX_LED-1){
 			  index_led = 0;
 		  }
 		  setTimer3(250);
 	  }
+
+	  //Quet cot led_matrix
+		  if (timer4_flag == 1){
+			clearENM();
+			openENM(index_led_matrix);
+			updateLEDMatrix(index_led_matrix);
+			index_led_matrix++;
+			if(index_led_matrix > 7){
+				index_led_matrix = 0;
+			}
+			 setTimer4(10);
+		 }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -301,7 +381,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 7999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 9;
+  htim2.Init.Period = 10;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
